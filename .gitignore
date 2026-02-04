@@ -1,0 +1,6 @@
+__pycache__/
+treeModels/
+exp/
+data/
+
+err.txt
