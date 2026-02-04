@@ -90,6 +90,16 @@ if __name__ == '__main__':
     import multiprocessing as mp
     import traceback
     
+    # remove lock files created by os_lock
+    count = 0
+    for folder, _, files in os.walk(arg_dict['root']):
+        for file in files:
+            if '.lock' in file:
+                os.remove(os.path.join(folder, file))
+                count += 1
+    print(f'Removed {count} lock files.')
+                
+    
     parser = argparse.ArgumentParser()
     parser.add_argument("-p", type=int, default=1, help="number of processes")
     n_processes = parser.parse_args().p
