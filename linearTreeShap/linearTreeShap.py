@@ -182,7 +182,7 @@ def cache(D):
 
 
 
-def inference(model, x, class_index=None, wellconditioned=False):
+def linear_treeshap(model, x, class_index=None, wellconditioned=False):
     tree = copy_tree(model.tree_, class_index)
     
     if wellconditioned:
@@ -239,7 +239,7 @@ if __name__ == "__main__":
     for i in range(3):
         x = X[i]
         util = treeUtility(model, x)
-        r = inference(model, x, wellconditioned=True)
+        r = linear_treeshap(model, x, wellconditioned=True)
         print('linear treeshap\n', r)
         gt = util.groundtruth_bruteforce((1, 1))
         print('ground truth\n', gt)
