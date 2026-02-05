@@ -10,7 +10,7 @@ arg_dict = dict(
         root='exp',
         random_seed=2025,
         #varied
-        dataset_id=_dataset_ids,
+        dataset_id=[4538, 44, 43174, 1475, 41150, 41145, 41168, 44975, 4549],
         sample_id=range(200),
         n_estimators=[0, 5],
         use_predicted_class=[0, 1],
