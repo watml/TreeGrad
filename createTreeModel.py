@@ -94,6 +94,7 @@ if __name__ == '__main__':
             
     
     for depth in range(35, 66):
+        print(depth)
         createTreeModel(1219, 0, 2025, depth)
         
             
