@@ -53,10 +53,10 @@ def createTreeModel(dataset_id, n_estimators, random_seed, depth=None):
     os.makedirs(_model_home, exist_ok=True)
     if n_estimators:
         model_path = os.path.join(_model_home, 
-                                  f'dataset_id={dataset_id}-depth={_id2depth[dataset_id]}-n_estimators={n_estimators}.pkl')
+                                  f'dataset_id={dataset_id}-depth={depth or _id2depth[dataset_id]}-n_estimators={n_estimators}.pkl')
     else:
         model_path = os.path.join(_model_home, 
-                                  f'dataset_id={dataset_id}-depth={_id2depth[dataset_id]}.pkl')
+                                  f'dataset_id={dataset_id}-depth={depth or _id2depth[dataset_id]}.pkl')
         
     if not os.path.exists(model_path):
         model.fit(X_train, y_train)
