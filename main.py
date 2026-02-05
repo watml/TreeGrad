@@ -110,14 +110,12 @@ if __name__ == '__main__':
     
     try:
         if n_processes == 1:
-            for i, arg in enumerate(args):
-                print(f'{i} / {n_total}')
+            for i, arg in tqdm(enumerate(args), total=n_total):
                 job(arg)
         else:
             with mp.Pool(n_processes) as pool:
-                process = pool.imap(job, args)
-                for _ in tqdm(process, total=n_total, 
-                              miniters=n_processes, maxinterval=float('inf')):
+                process = pool.imap_unordered(job, args)
+                for _ in tqdm(process, total=n_total):
                     pass
                 
 
