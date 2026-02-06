@@ -31,7 +31,7 @@ class utilTemplate:
     def groundtruth_bruteforce(self, semivalue, n_processes=1, n_queries_per_batch = 100):
         # compute a specific weighted Banzhaf value or Beta Shapley value defined by semivalue
         print(f'The number of processes is {n_processes}.')
-        print(f'The number of queries each iterate runs is {n_queries_per_batch}.')
+        print(f'The number of queries each iteration runs is {n_queries_per_batch}.')
         n_samples = 2 ** self.n_players
         n_batches = -(-n_samples//n_queries_per_batch)    
 

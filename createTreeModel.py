@@ -87,7 +87,7 @@ def data_from_openml(dataset_id, random_seed, test_size=0.2):
 
 
 if __name__ == '__main__':
-    for dataset_id in _dataset_ids:
+    for dataset_id in _dataset_ids[:-1]:
         print(dataset_id)
         for n_estimators in [0, 5]:
             createTreeModel(dataset_id, n_estimators, 2025)
