@@ -1,5 +1,5 @@
-from createTreeModel import _dataset_ids, createTreeModel, _classification_ids
-from TreeGrad import treegrad_ranker, treeprob
+from createTreeModel import createTreeModel, _classification_ids
+from TreeGrad import treegrad_ranker, treestab
 from utils import os_lock
 import numpy as np
 from utilFuncs import treeUtility
@@ -20,7 +20,7 @@ arg_dict = dict(
                 treegrad_ranker=dict(
                         T_max=[10, 50, 100],
                         lr=[1, 5, 10, 50],
-                        optimizer=['GA', 'Adam']    ,
+                        optimizer=['GA', 'Adam'],
                     ),
             )
     )
@@ -50,7 +50,7 @@ def job(arg):
                 results[0, 1:] = treegrad_ranker(model, x, class_index, arg['optimizer'], 
                                              arg['lr'], arg['T_max'])
             else:
-                results[0, 1:] = treeprob(model, x, arg['method'], class_index)
+                results[0, 1:] = treestab(model, x, arg['method'], class_index)
               
             
             util = treeUtility(model, x, class_index)

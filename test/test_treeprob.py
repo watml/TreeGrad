@@ -9,10 +9,16 @@ from sklearn.datasets import make_regression, make_classification
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.ensemble import GradientBoostingClassifier, GradientBoostingRegressor
 from utilFuncs import treeUtility
-from TreeGrad import treeprob
+
+
+
+#from TreeProb import treeprob
+#from TreeProb import treeprob_worsetime as treeprob
+from TreeGrad import treestab as treeprob
+
 
 def test_treeprob(model, util, x, class_index=None):
-    for semivalue in [0.2, 0.5, 0.8, (1,4), (1,1), (4,1)]:
+    for semivalue in [(1,16), (16, 1), (1, 1), 0.2, 0.5, 0.8]:
         t1 = treeprob(model, x, semivalue, class_index)
         t2 = util.groundtruth_bruteforce(semivalue)
         print(np.linalg.norm(t1-t2))

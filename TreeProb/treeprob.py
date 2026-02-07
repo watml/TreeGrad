@@ -5,7 +5,7 @@ import numbers
 
 
 
-def treeprob(model, x, semivalue, class_index=None):
+def treeprob(model, x, semivalue, class_index=None, test=False):
     # if class_index is None, model would be treated as regression trees
     n_players = len(x)    
     if hasattr(model, 'estimators_'):
@@ -14,24 +14,27 @@ def treeprob(model, x, semivalue, class_index=None):
         result = np.empty((shape[0], n_players), dtype=np.float64)
         for i, stage in enumerate(model.estimators_):
             if shape[1] == 1:
-                result[i] = treeprob_(stage[0].tree_, x, semivalue, 0)
+                result[i] = treeprob_(stage[0].tree_, x, semivalue, 0, test)
             else:
-                result[i] = treeprob_(stage[class_index].tree_, x, semivalue, 0)
+                result[i] = treeprob_(stage[class_index].tree_, x, semivalue, 0, test)
             
         outcome = model.learning_rate * result.sum(axis=0)
         if shape[1] == 1 and class_index == 0:
             outcome = -outcome           
     else:
         # for models trained using sklearn.tree.DecisionTreeClassifier/DecisionTreeRegressor
-        outcome = treeprob_(model.tree_, x, semivalue, class_index or 0)
+        outcome = treeprob_(model.tree_, x, semivalue, class_index or 0, test)
         
     return outcome
     
     
     
 
-def treeprob_(tree, x, semivalue, value_index):    
-    D = min(tree.max_depth, len(x))
+def treeprob_(tree, x, semivalue, value_index, test):   
+    if test:
+        D = tree.max_depth
+    else:
+        D = min(tree.max_depth, len(x))
     
     tmp = np.arange(D, dtype=np.float64)
     if isinstance(semivalue, tuple):

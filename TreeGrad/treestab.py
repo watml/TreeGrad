@@ -1,44 +1,48 @@
 import numpy as np
 from collections import defaultdict
+from .treegrad import treegrad
 
 
 
-def treegrad_shap(model, x, class_index=None, test=False):
+def treestab(model, x, semivalue, class_index=None):
     # if class_index is None, model would be treated as regression trees
-    n_players = len(x)
-    if hasattr(model, 'estimators_'):
-        # for models trained using sklearn.ensemble.GradientBoostingClassifier/GradientBoostingRegressor
-        shape = np.shape(model.estimators_)
-        result = np.empty((shape[0], n_players), dtype=np.float64)
-        for i, stage in enumerate(model.estimators_):
-            if shape[1] == 1:
-                result[i] = treegrad_shap_(stage[0].tree_, x, 0, test)
-            else:
-                assert class_index is not None
-                result[i] = treegrad_shap_(stage[class_index].tree_, x, 0, test)
-            
-        outcome = model.learning_rate * result.sum(axis=0)
-        if shape[1] == 1 and class_index == 0:
-            outcome = -outcome           
+    if isinstance(semivalue, tuple):
+        n_players = len(x)
+        if hasattr(model, 'estimators_'):
+            # for models trained using sklearn.ensemble.GradientBoostingClassifier/GradientBoostingRegressor
+            shape = np.shape(model.estimators_)
+            result = np.empty((shape[0], n_players), dtype=np.float64)
+            for i, stage in enumerate(model.estimators_):
+                if shape[1] == 1:
+                    result[i] = treestab_(stage[0].tree_, x, semivalue, 0)
+                else:
+                    assert class_index is not None
+                    result[i] = treestab_(stage[class_index].tree_, x, semivalue, 0)
+                
+            outcome = model.learning_rate * result.sum(axis=0)
+            if shape[1] == 1 and class_index == 0:
+                outcome = -outcome           
+        else:
+            # for models trained using sklearn.tree.DecisionTreeClassifier/DecisionTreeRegressor
+            outcome = treestab_(model.tree_, x, semivalue, class_index or 0)
+    
     else:
-        # for models trained using sklearn.tree.DecisionTreeClassifier/DecisionTreeRegressor
-        outcome = treegrad_shap_(model.tree_, x, class_index or 0, test)
+        assert 0 < semivalue and semivalue < 1
+        outcome = treegrad(model, x, np.full(len(x), semivalue, dtype=np.float64), class_index)
         
     return outcome
 
 
 
-def treegrad_shap_(tree, x, value_index, test):
-    if test:
-        D = tree.max_depth
-    else:
-        D = min(tree.max_depth, len(x))
-        
+def treestab_(tree, x, semivalue, value_index):
+    alpha, beta = semivalue
+    D = min(tree.max_depth, len(x)) + alpha + beta - 2
     n_points = -(-D // 2)
     points, weights = np.polynomial.legendre.leggauss(n_points)
     points += 1
     points /= 2
     weights /= 2
+    scalars = compute_scalars(alpha, beta, points)
     
     children_left = tree.children_left
     children_right = tree.children_right
@@ -55,7 +59,7 @@ def treegrad_shap_(tree, x, value_index, test):
     
     def traverse(node, n_samples_parent, feature_parent, activation, s=None):
         if s is None:
-            s = np.ones(n_points, dtype=np.float64)
+            s = scalars.copy()
         
         n_samples_current = n_node_samples[node]
         gamma = n_samples_parent / n_samples_current * activation
@@ -113,3 +117,14 @@ def treegrad_shap_(tree, x, value_index, test):
     traverse(right, n_samples_root, feature_root, activation_right)
     
     return phi
+
+
+def compute_scalars(alpha, beta, points):
+    tmp_alpha = np.arange(1, alpha, dtype=np.float64)
+    tmp_beta = np.arange(1, beta, dtype=np.float64)
+    tmp = np.arange(1, alpha+beta, dtype=np.float64)[::-1]
+    
+    scalars = ((tmp[:beta-1] * tmp[-1] / tmp_beta)[:,None] * points[None,:]).prod(axis=0)
+    scalars *= ((tmp[beta-1:-1] / tmp_alpha)[:,None] * (1-points)[None,:]).prod(axis=0)
+    
+    return scalars
