@@ -1,5 +1,4 @@
 import numpy as np
-from collections import defaultdict
 from .treegrad import treegrad
 from .treegrad_shap import treegrad_shap
 import numbers
