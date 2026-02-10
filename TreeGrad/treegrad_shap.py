@@ -3,7 +3,7 @@ from collections import defaultdict
 
 
 
-def treegrad_shap(model, x, class_index=None, test=False):
+def treegrad_shap(model, x, semivalue, class_index=None, test=False):
     # if class_index is None, model would be treated as regression trees
     n_players = len(x)
     if hasattr(model, 'estimators_'):
@@ -12,33 +12,41 @@ def treegrad_shap(model, x, class_index=None, test=False):
         result = np.empty((shape[0], n_players), dtype=np.float64)
         for i, stage in enumerate(model.estimators_):
             if shape[1] == 1:
-                result[i] = treegrad_shap_(stage[0].tree_, x, 0, test)
+                result[i] = treegrad_shap_(stage[0].tree_, x, semivalue, 0, test)
             else:
                 assert class_index is not None
-                result[i] = treegrad_shap_(stage[class_index].tree_, x, 0, test)
+                result[i] = treegrad_shap_(stage[class_index].tree_, x, semivalue, 0, test)
             
         outcome = model.learning_rate * result.sum(axis=0)
         if shape[1] == 1 and class_index == 0:
             outcome = -outcome           
     else:
         # for models trained using sklearn.tree.DecisionTreeClassifier/DecisionTreeRegressor
-        outcome = treegrad_shap_(model.tree_, x, class_index or 0, test)
+        outcome = treegrad_shap_(model.tree_, x, semivalue, class_index or 0, test)
         
     return outcome
 
 
 
-def treegrad_shap_(tree, x, value_index, test):
+def treegrad_shap_(tree, x, semivalue, value_index, test):
     if test:
         D = tree.max_depth
     else:
         D = min(tree.max_depth, len(x))
-        
+    
+    alpha, beta = semivalue
+    D += alpha + beta - 2
     n_points = -(-D // 2)
     points, weights = np.polynomial.legendre.leggauss(n_points)
     points += 1
     points /= 2
     weights /= 2
+    
+    tmp_alpha = np.arange(1, alpha, dtype=np.float64)
+    tmp_beta = np.arange(1, beta, dtype=np.float64)
+    tmp = np.arange(1, alpha+beta, dtype=np.float64)[::-1]
+    init = ((tmp[:beta-1] * tmp[-1] / tmp_beta)[:,None] * points[None,:]).prod(axis=0)
+    init *= ((tmp[beta-1:-1] / tmp_alpha)[:,None] * (1-points)[None,:]).prod(axis=0)
     
     children_left = tree.children_left
     children_right = tree.children_right
@@ -55,7 +63,7 @@ def treegrad_shap_(tree, x, value_index, test):
     
     def traverse(node, n_samples_parent, feature_parent, activation, s=None):
         if s is None:
-            s = np.ones(n_points, dtype=np.float64)
+            s = init.copy()
         
         n_samples_current = n_node_samples[node]
         gamma = n_samples_parent / n_samples_current * activation

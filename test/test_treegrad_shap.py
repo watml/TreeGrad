@@ -10,12 +10,11 @@ import numpy as np
 
 
 def test_treegrad_shap(util, model, x, class_index=None):
-    t1 = treegrad_shap(model, x, class_index)
-    # (1,1) corresponds to the Shapley value
-    t2 = util.groundtruth_bruteforce((1,1))
-    print(np.linalg.norm(t1-t2))
-
-
+    for semivalue in [(1,1), (1,4), (4,4), (4,1)]:
+        t1 = treegrad_shap(model, x, semivalue, class_index)
+        # (1,1) corresponds to the Shapley value
+        t2 = util.groundtruth_bruteforce(semivalue)
+        print(np.linalg.norm(t1-t2))
 
 
 if __name__ == '__main__':
