@@ -14,6 +14,7 @@ from TreeProb import treeprob, treeprob_worsetime
 import argparse
 import matplotlib.pyplot as plt
 import seaborn as sns
+from matplotlib.ticker import MaxNLocator
 
 
 n_samples = 5
@@ -64,10 +65,10 @@ if not os.path.exists('data_inaccuracy.npz'):
             r = treeprob_worsetime(model, x, (1, 1), 0, test=True)
             tp_worsetime_nomin[i, sample_id] = np.linalg.norm(r - gt)
             
-            r = treegrad_shap(model, x, 0)
+            r = treegrad_shap(model, x, (1, 1), 0)
             tg_shap_min[i, sample_id] = np.linalg.norm(r - gt)
             
-            r = treegrad_shap(model, x, 0, test=True)
+            r = treegrad_shap(model, x, (1, 1), 0, test=True)
             tg_shap_nomin[i, sample_id] = np.linalg.norm(r - gt)
             
             
@@ -76,7 +77,7 @@ if not os.path.exists('data_inaccuracy.npz'):
                         lts_wc=lts_wc,
                         tp_min=tp_min,
                         tp_nomin=tp_nomin,
-                        tp_worsetime=tp_worsetime_min,
+                        tp_worsetime_min=tp_worsetime_min,
                         tp_worsetime_nomin=tp_worsetime_nomin,
                         tg_shap_min=tg_shap_min,
                         tg_shap_nomin=tg_shap_nomin)
@@ -87,30 +88,24 @@ else:
     lts_wc = data['lts_wc']
     tp_min = data['tp_min']
     tp_nomin = data['tp_nomin']
-    tp_worsetime = data['tp_worsetime']
+    tp_worsetime_min = data['tp_worsetime_min']
+    tp_worsetime_nomin = data['tp_worsetime_nomin']
     tg_shap_min = data['tg_shap_min']
     tg_shap_nomin = data['tg_shap_nomin']
-
-colors = sns.color_palette('hls', 8)
-# =============================================================================
-# colors = [tmp[-2], tmp[1], tmp[-3]]
-# tmp = sns.color_palette('husl')
-# colors += [tmp[3]]
-# =============================================================================
+ 
+    
+p1 = sns.color_palette('hls', 8)
+p2 = sns.color_palette('husl', 8)
+colors = [p1[-2], p2[1], p2[3]]
 fig, ax = plt.subplots(figsize=(32, 24))
 plt.grid()
 ax.tick_params(axis='x', labelsize=80)
 ax.tick_params(axis='y', labelsize=80)
 plt.yscale('log')
-from matplotlib.ticker import MaxNLocator
 ax.xaxis.set_major_locator(MaxNLocator(integer=True)) # force integer xtick labels
-
-labels = ['Linear TreeShap', 'Linear TreeShap (well-conditioned)', 'TreeProb with min',
-          'TreeProb without min', 'TreeProb worse with min', 'TreeProb worse without min',
-          'TreeGrad-Shap with min', 'TreeGrad-Shap without min']
+labels = ['Linear TreeShap', 'Linear TreeShap (well-conditioned)', 'TreeGrad-Shap']
 index = 0
-for label, curve in zip(labels, [lts, lts_wc, tp_min, tp_nomin, tp_worsetime_min,
-                                 tp_worsetime_nomin, tg_shap_min, tg_shap_nomin]):
+for label, curve in zip(labels, [lts, lts_wc, tg_shap_min]):
     curve_mean = curve.mean(axis=1)
     curve_std = curve.std(axis=1)
     
@@ -120,8 +115,37 @@ for label, curve in zip(labels, [lts, lts_wc, tp_min, tp_nomin, tp_worsetime_min
 
 plt.xlabel(r'depth $D$', fontsize=100)
 plt.ylabel(r'$\|\hat{\phi} - \phi\|_{2}$', fontsize=100)
-plt.legend(fontsize=30, framealpha=0.5)
-plt.savefig('inaccuracy.pdf', bbox_inches='tight')
+plt.legend(fontsize=80, framealpha=0.5)
+plt.savefig('inaccuracy_main.pdf', bbox_inches='tight')
+plt.close(fig)
+    
+
+colors = [p1[-2], p2[1], p2[3], p1[-4], p1[0], p1[2], p1[-1], p1[-3]]
+fig, ax = plt.subplots(figsize=(32, 24))
+plt.grid()
+ax.tick_params(axis='x', labelsize=80)
+ax.tick_params(axis='y', labelsize=80)
+plt.yscale('log')
+
+
+labels = ['Linear TreeShap', 'Linear TreeShap (well-conditioned)', 'TreeGrad-Shap w/ min',
+          'TreeGrad-Shap w/o min',
+          'TreeProb w/ min', 'TreeProb w/o min', 'TreeProb (modified) w/ min', 
+          'TreeProb (modified) w/o min']
+index = 0
+for label, curve in zip(labels, [lts, lts_wc, tg_shap_min, tg_shap_nomin, tp_min, tp_nomin, tp_worsetime_min,
+                                 tp_worsetime_nomin]):
+    curve_mean = curve.mean(axis=1)
+    curve_std = curve.std(axis=1)
+    
+    ax.plot(depths, curve_mean, linewidth=10, label=label, color=colors[index])
+    ax.fill_between(depths, curve_mean - curve_std, curve_mean + curve_std, alpha=0.2, color=colors[index])
+    index += 1
+
+plt.xlabel(r'depth $D$', fontsize=100)
+plt.ylabel(r'$\|\hat{\phi} - \phi\|_{2}$', fontsize=100)
+plt.legend(fontsize=60, framealpha=0.5)
+plt.savefig('inaccuracy_app.pdf', bbox_inches='tight')
 plt.close(fig)
 
     
