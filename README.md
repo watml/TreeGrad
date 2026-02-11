@@ -14,7 +14,10 @@ This repository contains the code for our paper:
 * **TreeGrad-Ranker**: An optimized feature ranking tool.
 *  **TreeStab**: The combination of **TreeGrad** and **TreeGrad-Shap**.
 
----
+### Testing and Verification
+
+The `test/` directory contains several scripts used to verify the correctness  of our implementation.
+
 
 ## Replicate our Results
 
