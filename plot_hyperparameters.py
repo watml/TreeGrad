@@ -81,13 +81,13 @@ if __name__ == '__main__':
     
     for i, label in enumerate(labels):
         plt.plot([], [], label=fr'GA [T={label[0]}, $\epsilon$={label[1]}]', color=colors[i], linewidth=30)       
-    legend = plt.legend(ncol=6, fontsize=100, loc="upper left", bbox_to_anchor=(1, 1))
+    legend = plt.legend(ncol=5, fontsize=100, loc="upper left", bbox_to_anchor=(1, 1))
     export_legend(legend, 'legend_GA.pdf')
     plt.close()
     
     for i, label in enumerate(labels):
         plt.plot([], [], label=fr'ADAM [T={label[0]}, $\epsilon$={label[1]}]', color=colors[i], linewidth=30)       
-    legend = plt.legend(ncol=6, fontsize=100, loc="upper left", bbox_to_anchor=(1, 1))
+    legend = plt.legend(ncol=5, fontsize=100, loc="upper left", bbox_to_anchor=(1, 1))
     export_legend(legend, 'legend_ADAM.pdf')
     plt.close()
     
