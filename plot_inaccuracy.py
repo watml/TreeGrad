@@ -96,6 +96,7 @@ else:
     
 p1 = sns.color_palette('hls', 8)
 p2 = sns.color_palette('husl', 8)
+p3 = sns.color_palette("Set2")
 colors = [p1[-2], p2[1], p2[3]]
 fig, ax = plt.subplots(figsize=(32, 24))
 plt.grid()
@@ -115,12 +116,12 @@ for label, curve in zip(labels, [lts, lts_wc, tg_shap_min]):
 
 plt.xlabel(r'depth $D$', fontsize=100)
 plt.ylabel(r'$\|\hat{\phi} - \phi\|_{2}$', fontsize=100)
-plt.legend(fontsize=80, framealpha=0.5)
+plt.legend(fontsize=60, framealpha=0.5)
 plt.savefig('inaccuracy_main.pdf', bbox_inches='tight')
 plt.close(fig)
     
 
-colors = [p1[-2], p2[1], p2[3], p1[-4], p1[0], p1[2], p1[-1], p1[-3]]
+colors = [p1[-2], p2[1], p2[3], p1[-4], p3[2], p1[2], p1[-1], p1[-3]]
 fig, ax = plt.subplots(figsize=(32, 24))
 plt.grid()
 ax.tick_params(axis='x', labelsize=80)
