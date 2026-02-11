@@ -67,7 +67,7 @@ def plot_curves(r, upc, n_estimators, dataset_id):
         fig, ax = plt.subplots(figsize=(32, 24))
         for j, (label, curve) in enumerate(zip(labels, curves)):
             curve_mean = curve[:, i].mean(axis=0)
-            ax.plot(x, curve_mean, linewidth=10, label=label, c=colors[j])
+            ax.plot(x, curve_mean, linewidth=10, c=colors[j])
             
         ax.tick_params(axis='x', labelsize=80)
         ax.tick_params(axis='y', labelsize=80)
