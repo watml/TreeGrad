@@ -30,7 +30,7 @@ python createTreeModel.py
 ```
 
 ### 2. Run Experiments
-Generate the experimental results. Use the `-p` flag followed by the number of available CPUs:
+To generate the experimental results, use the `-p` flag followed by the number of available CPUs:
 ```
 python main.py -p <number_of_cpus>
 ```
