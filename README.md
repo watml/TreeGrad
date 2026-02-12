@@ -43,6 +43,6 @@ python plot_hyperparameters.py
 ### 4. Numerical Inaccuracy Analysis
 To replicate the numerical stability analysis and visualize the precision gap, run:
 ```
-python plot_inaccuracy.py
+python plot_inaccuracy.py -p <number_of_cpus>
 ```
 
