@@ -6,7 +6,7 @@ This repository contains the code for our paper:
 
 ## Overview
 
-**TreeStab** provides a numerically stable $O(LD)$-time framework for computing Beta Shapley values (with integral parameters), which includes the Shapley value, and Weighted Banzhaf values. Previous $O(LD)$-time algorithm, such as Linear TreeShap that computes the Shapley value, suffers from significant error accumulation. In our paper, we demonstrate that the numerical error of Linear TreeShap can reach up to $10^{15}$ times larger than that of **TreeStab**.
+**TreeStab** provides a numerically stable $O(LD)$-time framework for computing Beta Shapley values (with integral parameters), which includes the Shapley value, and Weighted Banzhaf values. Previous $O(LD)$-time algorithms (three in total) that computes the Shapley value, such as Linear TreeShap, suffer from significant error accumulation. In our paper, we demonstrate that the numerical error of Linear TreeShap can reach up to $10^{15}$ times larger than that of **TreeStab**.
 
 ### Core Algorithms:
 * **TreeGrad**: The backbone algorithm calculating gradients in $O(L)$ time, which include weighted Banzhaf values.
