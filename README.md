@@ -14,6 +14,10 @@ This repository contains the code for our paper:
 * **TreeGrad-Ranker**: An optimized feature ranking tool.
 *  **TreeStab**: The combination of **TreeGrad** and **TreeGrad-Shap**.
 
+Our implementation supports models trained using `sklearn.ensemble.GradientBoostingClassifier`, `sklearn.ensemble.GradientBoostingRegressor`, `sklearn.tree.DecisionTreeClassifier`, and `sklearn.tree.DecisionTreeRegressor`.
+
+For classification tasks, $f_{\mathbf{x}}(S)$ is defined as the predicted probability for decision trees, whereas for gradient boosting models it corresponds to the logit before the softmax.
+
 ### Testing and Verification
 
 The `test/` directory contains several scripts used to verify the correctness  of our implementation.
