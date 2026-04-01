@@ -92,6 +92,7 @@ class utilTemplate:
     
     
     def compute_weights(self, semivalue, n_players=None):
+        # use it only for small n_players, when n_players > 500, it has some numerical issue.
         # compute the weights for { U(SUi)-U(i) }
         n_players = n_players or self.n_players # make it compatible with treeprob
         
@@ -128,11 +129,12 @@ class utilTemplate:
                     r_cur *= np.divide((alpha - 1) + tmp_range, tmp_range).prod()
                     weights[s] = r_cur
         else:
-            weights = np.ones(self.n_players, dtype=np.float64)
+            weights = np.zeros(self.n_players, dtype=np.float64)
             for k in range(self.n_players):
                 for i in range(k):
-                    weights[k] *= (self.n_players - 1 - i) / (i + 1) * semivalue * (1 - semivalue)
-                weights[k] *= (1 - semivalue) ** (self.n_players - 1 - 2 * k)
+                    weights[k] += np.log((self.n_players - 1 - i) / (i + 1) * semivalue * (1 - semivalue))
+                weights[k] += (self.n_players - 1 - 2 * k) * np.log(1 - semivalue)
+            weights = np.exp(weights)
 
         return weights
         
