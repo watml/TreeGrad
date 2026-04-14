@@ -15,6 +15,7 @@ import argparse
 import matplotlib.pyplot as plt
 import seaborn as sns
 from matplotlib.ticker import MaxNLocator
+import shap
 
 
 n_samples = 5
@@ -38,6 +39,8 @@ if not os.path.exists('data_inaccuracy.npz'):
     
     tg_shap_min = np.empty_like(lts)
     tg_shap_nomin = np.empty_like(lts)
+    
+    tshap = np.empty_like(lts)
     
     for i, depth in enumerate(depths):
         print(depth)
@@ -71,6 +74,11 @@ if not os.path.exists('data_inaccuracy.npz'):
             r = treegrad_shap(model, x, (1, 1), 0, test=True)
             tg_shap_nomin[i, sample_id] = np.linalg.norm(r - gt)
             
+            explainer = shap.TreeExplainer(model)
+            r = explainer.shap_values(x)[:,0]
+            tshap[i, sample_id] = np.linalg.norm(r - gt)
+            
+            
             
     np.savez_compressed('data_inaccuracy.npz',
                         lts=lts,
@@ -80,7 +88,8 @@ if not os.path.exists('data_inaccuracy.npz'):
                         tp_worsetime_min=tp_worsetime_min,
                         tp_worsetime_nomin=tp_worsetime_nomin,
                         tg_shap_min=tg_shap_min,
-                        tg_shap_nomin=tg_shap_nomin)
+                        tg_shap_nomin=tg_shap_nomin,
+                        tshap=tshap)
     
 else:
     data = np.load('data_inaccuracy.npz')
@@ -92,6 +101,7 @@ else:
     tp_worsetime_nomin = data['tp_worsetime_nomin']
     tg_shap_min = data['tg_shap_min']
     tg_shap_nomin = data['tg_shap_nomin']
+    tshap = data['tshap']
  
     
 p1 = sns.color_palette('hls', 8)
@@ -121,7 +131,7 @@ plt.savefig('inaccuracy_main.pdf', bbox_inches='tight')
 plt.close(fig)
     
 
-colors = [p1[-2], p2[1], p2[3], p1[-4], p3[2], p1[2], p1[-1], p1[-3]]
+colors = [p1[-2], p2[1], p2[3], p1[-4], p3[2], p1[2], p1[-1], p1[-3], p1[0]]
 fig, ax = plt.subplots(figsize=(32, 24))
 plt.grid()
 ax.tick_params(axis='x', labelsize=80)
@@ -132,15 +142,15 @@ plt.yscale('log')
 labels = ['Linear TreeShap', 'Linear TreeShap (well-conditioned)', 'TreeGrad-Shap w/ min',
           'TreeGrad-Shap w/o min',
           'TreeProb w/ min', 'TreeProb w/o min', 'TreeProb (modified) w/ min', 
-          'TreeProb (modified) w/o min']
+          'TreeProb (modified) w/o min', 'TreeShap']
 index = 0
 for label, curve in zip(labels, [lts, lts_wc, tg_shap_min, tg_shap_nomin, tp_min, tp_nomin, tp_worsetime_min,
-                                 tp_worsetime_nomin]):
+                                 tp_worsetime_nomin, tshap]):
     curve_mean = curve.mean(axis=1)
     curve_std = curve.std(axis=1)
     
     ax.plot(depths, curve_mean, linewidth=10, label=label, color=colors[index])
-    ax.fill_between(depths, curve_mean - curve_std, curve_mean + curve_std, alpha=0.2, color=colors[index])
+    ax.fill_between(depths, curve_mean * np.exp(-curve_std), curve_mean * np.exp(curve_std), alpha=0.2, color=colors[index])
     index += 1
 
 plt.xlabel(r'depth $D$', fontsize=100)
@@ -148,8 +158,3 @@ plt.ylabel(r'$\|\hat{\phi} - \phi\|_{2}$', fontsize=100)
 plt.legend(fontsize=60, framealpha=0.5)
 plt.savefig('inaccuracy_app.pdf', bbox_inches='tight')
 plt.close(fig)
-
-    
-    
-    
-            
