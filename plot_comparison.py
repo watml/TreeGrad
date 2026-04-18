@@ -78,9 +78,9 @@ def plot_curves(r, upc, n_estimators, dataset_id):
             plt.ylabel('predicted value', fontsize=100)
             
         if i:
-            plt.xlabel('#deleted features')
+            plt.xlabel('#deleted features', fontsize=100)
         else:
-            plt.xlabel('#inserted features')
+            plt.xlabel('#inserted features', fontsize=100)
 
         plt.grid()
         plt.savefig(path_fig.format(dataset_id, upc, n_estimators, tp), bbox_inches='tight')
