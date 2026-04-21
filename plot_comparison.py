@@ -13,9 +13,8 @@ path_fig = os.path.join(
 labels = ['TreeGrad-Ranker with GA', 'TreeGrad-Ranker with ADAM', 'Banzhaf', 
           'Beta-Insertion', 'Beta-Deletion', 'Beta-Joint', 'Greedy']
 
-p = sns.color_palette("Set1", 10)
-colors = [p[i] for i in [0,1,2,3,4,7]]
-colors += [sns.color_palette("Set2", 10)[6]]
+p = sns.color_palette("Set1", 9)
+colors = [p[i] for i in [0,1,2,3,4,7,6]]
 
 beta_shapley = [(16,1), (8,1), (4,1), (2,1), (1,1), (1,2), (1,4), (1,8), 
                 (1,16), (1,32)]
@@ -152,8 +151,3 @@ if __name__ == '__main__':
                         raise ValueError
                 
                 plot_curves(r, upc, n_estimators, dataset_id)
-                
-            
-            
-
-        
