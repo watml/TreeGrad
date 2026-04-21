@@ -150,7 +150,6 @@ for label, curve in zip(labels, [lts, lts_wc, tg_shap_min, tg_shap_nomin, tp_min
     curve_std = curve.std(axis=1)
     
     ax.plot(depths, curve_mean, linewidth=10, label=label, color=colors[index])
-    ax.fill_between(depths, curve_mean * np.exp(-curve_std), curve_mean * np.exp(curve_std), alpha=0.2, color=colors[index])
     index += 1
 
 plt.xlabel(r'depth $D$', fontsize=100)

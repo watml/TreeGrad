@@ -1,3 +1,14 @@
+import os
+# If there are n cpus, without the following specification, each process would
+# create n threads. So, given n_processes = n, there would be nxn threads in total,
+# which could hurt performance. Make sure n_processes x n_threads <= n_cpus.
+# it should be done before importing any other modules.
+NUM_THREAD = 1
+os.environ["OMP_NUM_THREADS"] = f"{NUM_THREAD}"
+os.environ["OPENBLAS_NUM_THREADS"] = f"{NUM_THREAD}"
+os.environ["MKL_NUM_THREADS"] = f"{NUM_THREAD}"
+os.environ["VECLIB_MAXIMUM_THREADS"] = f"{NUM_THREAD}"
+os.environ["NUMEXPR_NUM_THREADS"] = f"{NUM_THREAD}"
 from createTreeModel import createTreeModel, _classification_ids
 from TreeGrad import treegrad_ranker, treestab
 import numpy as np
@@ -21,67 +32,82 @@ arg_dict = dict(
                         lr=[1, 5, 10, 50],
                         optimizer=['GA', 'Adam'],
                     ),
+                greedy=['greedy']
             )
     )
 
 
+def skip_arg(arg):
+    if 'T_max' in arg:
+        if (arg['T_max'], arg['lr']) not in [(10, 5), (50, 5), (100, 5), (100, 1), (10, 1)]:
+            return 1
+        
+    return 0
+
+
 def job(arg):
-    if not os.path.exists(arg['path_results']):
-        model, X_test, _ = createTreeModel(arg['dataset_id'], arg['n_estimators'], 
-                                        arg['random_seed'])
-        x = X_test[arg['sample_id']]
-        if arg['dataset_id'] in _classification_ids:
-            predicted_proba = model.predict_proba(x[None, :])
-            predicted_class = np.argmax(predicted_proba[0])
-            if arg['use_predicted_class']:
-                class_index = predicted_class
+    if not skip_arg(arg):        
+        if not os.path.exists(arg['path_results']):
+            model, X_test, _ = createTreeModel(arg['dataset_id'], arg['n_estimators'], 
+                                            arg['random_seed'])
+            x = X_test[arg['sample_id']]
+            if arg['dataset_id'] in _classification_ids:
+                predicted_proba = model.predict_proba(x[None, :])
+                predicted_class = np.argmax(predicted_proba[0])
+                if arg['use_predicted_class']:
+                    class_index = predicted_class
+                else:
+                    n_classes = predicted_proba.shape[1]
+                    np.random.seed(arg['random_seed'])
+                    offset = np.random.choice(np.arange(1, n_classes))
+                    class_index = (predicted_class + offset) % n_classes
             else:
-                n_classes = predicted_proba.shape[1]
-                np.random.seed(arg['random_seed'])
-                offset = np.random.choice(np.arange(1, n_classes))
-                class_index = (predicted_class + offset) % n_classes
-        else:
-            class_index = None
+                class_index = None              
+            util = treeUtility(model, x, class_index)
+            
+            results = np.empty((3, len(x) + 1), dtype=np.float64)
+            if arg['method'] == 'treegrad_ranker':
+                results[0, 1:] = treegrad_ranker(model, x, class_index, arg['optimizer'], 
+                                             arg['lr'], arg['T_max'])
+            elif arg['method'] == 'greedy':
+                subset = np.zeros(len(x), dtype=bool)
+                players = list(range(len(x)))
+                count = 0
+                while len(players):
+                    v_pre = -np.inf
+                    for player in players:
+                        subset[player] = 1
+                        v_cur = util.evaluate(subset) - util.evaluate(~subset)
+                        if v_cur > v_pre:
+                            player_cur = player
+                            v_pre = v_cur
+                        subset[player] = 0
+                    subset[player_cur] = 1
+                    players.remove(player_cur)
+                    results[0, player_cur+1] = -count
+                    count += 1
+            else:
+                results[0, 1:] = treestab(model, x, arg['method'], class_index)
+              
         
-        results = np.empty((3, len(x) + 1), dtype=np.float64)
-        if arg['method'] == 'treegrad_ranker':
-            results[0, 1:] = treegrad_ranker(model, x, class_index, arg['optimizer'], 
-                                         arg['lr'], arg['T_max'])
-        else:
-            results[0, 1:] = treestab(model, x, arg['method'], class_index)
-          
-        
-        util = treeUtility(model, x, class_index)
-        ranking = np.argsort(results[0, 1:])[:0:-1]
-        
-        subset_inc = np.zeros(len(x), dtype=bool)
-        subset_dec = np.ones(len(x), dtype=bool)
-        results[1, 0] = util.evaluate(subset_inc, test=True)
-        results[1, -1] = util.evaluate(subset_dec, test=True)
-        results[2, 0], results[2, -1] = results[1, -1], results[1, 0]     
-        for i, player in enumerate(ranking):
-            subset_inc[player] = True
-            results[1, i+1] = util.evaluate(subset_inc, test=True)
-            subset_dec[player] = False
-            results[2, i+1] = util.evaluate(subset_dec, test=True)
-        
-        np.savez_compressed(arg['path_results'], results=results)
+            ranking = np.argsort(results[0, 1:])[:0:-1]
+            
+            subset_inc = np.zeros(len(x), dtype=bool)
+            subset_dec = np.ones(len(x), dtype=bool)
+            results[1, 0] = util.evaluate(subset_inc, test=True)
+            results[1, -1] = util.evaluate(subset_dec, test=True)
+            results[2, 0], results[2, -1] = results[1, -1], results[1, 0]     
+            for i, player in enumerate(ranking):
+                subset_inc[player] = True
+                results[1, i+1] = util.evaluate(subset_inc, test=True)
+                subset_dec[player] = False
+                results[2, i+1] = util.evaluate(subset_dec, test=True)
+            
+            np.savez_compressed(arg['path_results'], results=results)
 
 
 
 if __name__ == '__main__':
-    import os
-    # If there are n cpus, without the following specification, each process would
-    # create n threads. So, given n_processes = n, there would be nxn threads in total,
-    # which could hurt performance. Make sure n_processes x n_threads <= n_cpus.
-    # it should be done before importing any other modules.
-    NUM_THREAD = 1
-    os.environ["OMP_NUM_THREADS"] = f"{NUM_THREAD}"
-    os.environ["OPENBLAS_NUM_THREADS"] = f"{NUM_THREAD}"
-    os.environ["MKL_NUM_THREADS"] = f"{NUM_THREAD}"
-    os.environ["VECLIB_MAXIMUM_THREADS"] = f"{NUM_THREAD}"
-    os.environ["NUMEXPR_NUM_THREADS"] = f"{NUM_THREAD}"
-    
     import argparse
     from args import process_arg_dict
     from tqdm import tqdm

@@ -11,10 +11,11 @@ path_fig = os.path.join(
 
 
 labels = ['TreeGrad-Ranker with GA', 'TreeGrad-Ranker with ADAM', 'Banzhaf', 
-          'Beta-Insertion', 'Beta-Deletion', 'Beta-Joint']
+          'Beta-Insertion', 'Beta-Deletion', 'Beta-Joint', 'Greedy']
 
 p = sns.color_palette("Set1", 10)
 colors = [p[i] for i in [0,1,2,3,4,7]]
+colors += [sns.color_palette("Set2", 10)[6]]
 
 beta_shapley = [(16,1), (8,1), (4,1), (2,1), (1,1), (1,2), (1,4), (1,8), 
                 (1,16), (1,32)]
@@ -59,8 +60,9 @@ def plot_curves(r, upc, n_estimators, dataset_id):
     curves.append(beta[index_deletion, np.arange(200)])
     index_joint = np.argmax(beta_auc[:,:,0] - beta_auc[:,:,1], axis=0)
     curves.append(beta[index_joint, np.arange(200)])
-       
     
+    curves.append(r['Greedy'])
+       
     x = np.arange(n_players[dataset_id] + 1)
     
     for i, tp in enumerate(['insertion', 'deletion']):
@@ -101,7 +103,7 @@ if __name__ == '__main__':
     
     for i, label in enumerate(labels):
         plt.plot([], [], label=label, color=colors[i], linewidth=30)       
-    legend = plt.legend(ncol=6, fontsize=100, loc="upper left", bbox_to_anchor=(1, 1))
+    legend = plt.legend(ncol=7, fontsize=100, loc="upper left", bbox_to_anchor=(1, 1))
     export_legend(legend, 'legend_comparison.pdf')
     
     
@@ -128,6 +130,7 @@ if __name__ == '__main__':
                 r['TreeGrad-Ranker'] = np.empty((2, 200, 2, n_players[dataset_id] + 1), dtype=np.float64)
                 r['Banzhaf'] = np.empty((200, 2, n_players[dataset_id] + 1), dtype=np.float64)
                 r['Beta'] = np.empty((10, 200, 2, n_players[dataset_id] + 1), dtype=np.float64)
+                r['Greedy'] = np.empty((200, 2, n_players[dataset_id] + 1), dtype=np.float64)
                 
                 for arg in args_4th:
                     data = np.load(arg['path_results'])
@@ -143,6 +146,8 @@ if __name__ == '__main__':
                             r['TreeGrad-Ranker'][1, arg['sample_id']] = data['results'][1:]
                         else:
                             raise ValueError
+                    elif arg['method'] == 'greedy':
+                        r['Greedy'][arg['sample_id']] = data['results'][1:]
                     else:
                         raise ValueError
                 

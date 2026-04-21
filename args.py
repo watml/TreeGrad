@@ -83,10 +83,6 @@ def filter_arg(arg_comb):
         if arg['dataset_id'] not in _classification_ids and arg['use_predicted_class']:
             continue
         
-        if 'T_max' in arg:
-            if (arg['T_max'], arg['lr']) not in [(10, 5), (50, 5), (100, 5), (100, 1), (10, 1)]:
-                continue
-        
         arg_comb_filtered.append(arg)
     return arg_comb_filtered
 
